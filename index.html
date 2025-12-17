@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Scout - Master Command | htmlマン</title>
+    <style>
+        :root {
+            --primary: #0a2e5c;
+            --accent: #e63946;
+            --bg: #f0f2f5;
+            --success: #2b9348;
+            --btn-idle: #ffffff;
+            --btn-active: #0a2e5c;
+            --danger: #d90429;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* トグルスイッチ */
+        .switch-container {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fff; padding: 8px 12px; border-radius: 12px;
+            border: 1px solid #ddd;
+        }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #2196F3; transition: .3s; border-radius: 24px;
+        }
+        .slider-toggle:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider-toggle { background-color: #f44336; }
+        input:checked + .slider-toggle:before { transform: translateX(22px); }
+        .switch-label { font-size: 0.75rem; font-weight: bold; color: #555; }
+
+        /* レイアウト */
+        .main-container {
+            display: flex; flex-direction: column; gap: 15px;
+            background: white; padding: 15px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 1000px;
+        }
+        @media (min-width: 850px) { .main-container { flex-direction: row; padding: 25px; } }
+
+        /* キャンバス */
+        .canvas-section { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        #pitch-canvas-container {
+            position: relative; width: 320px; height: 400px;
+            background: #dee2e6; border: 4px solid #222; border-radius: 12px; touch-action: none;
+        }
+        #strike-zone-box {
+            position: absolute; top: 90px; left: 70px; width: 180px; height: 220px;
+            border: 2px solid rgba(0,0,0,0.4); background: rgba(255,255,255,0.1); pointer-events: none;
+        }
+        canvas#heatmap-layer { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0.7; }
+        .marker { position: absolute; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); border: 1px solid #fff; pointer-events: none; }
+
+        /* 操作パネル */
+        .panel { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-weight: bold; font-size: 0.8rem; color: var(--primary); margin-bottom: 2px; }
+        input[type="text"], select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; }
+
+        /* コンパス */
+        .pitch-compass {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            width: 100%; max-width: 250px; margin: 0 auto;
+        }
+        .pitch-btn {
+            aspect-ratio: 1/1; border: 1px solid #ddd; border-radius: 10px;
+            background: var(--btn-idle); font-size: 1.1rem; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .pitch-btn span { font-size: 0.55rem; margin-top: 2px; font-weight: bold; }
+        .pitch-btn.active { background: var(--btn-active); color: white; border-color: var(--btn-active); }
+
+        /* スライダー */
+        .speed-val { font-size: 1.8rem; font-weight: bold; color: var(--accent); text-align: center; }
+        input[type="range"] { width: 100%; height: 30px; }
+
+        .btn-row { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 1rem; }
+        .btn-record { background: var(--primary); }
+        .btn-csv { background: var(--success); }
+
+        /* 履歴テーブル */
+        .history { width: 100%; margin-top: 20px; overflow-x: auto; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 0.85rem; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background: var(--primary); color: white; position: sticky; top: 0; }
+        .delete-btn { background: var(--danger); color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+    <h1 style="font-size: 1.4rem; margin: 10px 0;">⚾ Elite Scout: Master Command</h1>
+
+    <div class="main-container">
+        <div class="canvas-section">
+            <div id="pitch-canvas-container">
+                <canvas id="heatmap-layer" width="320" height="400"></canvas>
+                <div id="strike-zone-box"></div>
+            </div>
+            <div id="judge-display" style="font-weight: bold; font-size: 1.4rem; margin: 10px 0; color: #888;">JUDGE</div>
+            
+            <div style="width: 100%; background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #eee;">
+                <label>🔥 ヒートマップ切替:</label>
+                <select id="heatmap-filter" onchange="drawHeatmap()" style="width: 100%; margin-top: 5px;">
+                    <option value="All">全球種を表示</option>
+                    <option value="ストレート">ストレート</option>
+                    <option value="スライダー">スライダー</option>
+                    <option value="カーブ">カーブ</option>
+                    <option value="フォーク">フォーク</option>
+                    <option value="チェンジ">チェンジ</option>
+                    <option value="シュート">シュート</option>
+                    <option value="シンカー">シンカー</option>
+                    <option value="カット">カット</option>
+                    <option value="ライズ">ライズ</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>投手名:</label>
+                    <input type="text" id="pitcher-name" value="田中">
+                    <div class="switch-container" style="margin-top:5px;">
+                        <span class="switch-label">右</span>
+                        <label class="switch">
+                            <input type="checkbox" id="pitcher-hand" onchange="renderCompass()">
+                            <span class="slider-toggle"></span>
+                        </label>
+                        <span class="switch-label">左</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>打者名:</label>
+                    <input type="text" id="batter-name" value="打者A" onchange="drawHeatmap()">
+                    <div class="switch-container" style="margin-top:5px;">
+                        <span class="switch-label">右</span>
+                        <label class="switch">
+                            <input type="checkbox" id="batter-side">
+                            <span class="slider-toggle"></span>
+                        </label>
+                        <span class="switch-label">左</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>球種（曲がる方向で選択）:</label>
+                <div class="pitch-compass" id="compass"></div>
+            </div>
+
+            <div class="input-group">
+                <div class="speed-val"><span id="speed-num">140</span> <small>km/h</small></div>
+                <input type="range" id="speed-slider" min="80" max="170" value="140" oninput="document.getElementById('speed-num').innerText = this.value">
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-record" onclick="recordPitch()">投球を記録</button>
+                <button class="btn btn-csv" onclick="downloadCSV()">CSV保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="history">
+        <table id="log-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>投手</th>
+                    <th>打者</th>
+                    <th>球種</th>
+                    <th>km/h</th>
+                    <th>判定</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let currentX = null, currentY = null;
+        let selectedType = 'ストレート';
+        let pitchData = [];
+
+        const pitchColors = {
+            'ストレート': '#e74c3c', 'カーブ': '#3498db', 'スライダー': '#2ecc71',
+            'フォーク': '#f39c12', 'チェンジ': '#9b59b6', 'シュート': '#1abc9c',
+            'シンカー': '#d35400', 'カット': '#34495e', 'ライズ': '#f1c40f'
+        };
+
+        const compassMap = [
+            { pos: 'ul', arrow: '↖', rLabel: 'カーブ', lLabel: 'カット' },
+            { pos: 'u',  arrow: '↑', rLabel: 'ライズ', lLabel: 'ライズ' },
+            { pos: 'ur', arrow: '↗', rLabel: 'カット', lLabel: 'カーブ' },
+            { pos: 'l',  arrow: '←', rLabel: 'スライダー', lLabel: 'シュート' },
+            { pos: 'c',  arrow: '◯', rLabel: '直球', lLabel: '直球' },
+            { pos: 'r',  arrow: '→', rLabel: 'シュート', lLabel: 'スライダー' },
+            { pos: 'dl', arrow: '↙', rLabel: 'チェンジ', lLabel: 'シンカー' },
+            { pos: 'd',  arrow: '↓', rLabel: 'フォーク', lLabel: 'フォーク' },
+            { pos: 'dr', arrow: '↘', rLabel: 'シンカー', lLabel: 'チェンジ' }
+        ];
+
+        function renderCompass() {
+            const isLeft = document.getElementById('pitcher-hand').checked;
+            const container = document.getElementById('compass');
+            container.innerHTML = '';
+            compassMap.forEach(item => {
+                const label = isLeft ? item.lLabel : item.rLabel;
+                const realType = (label === '直球' ? 'ストレート' : label);
+                const btn = document.createElement('button');
+                btn.className = `pitch-btn ${selectedType === realType ? 'active' : ''}`;
+                btn.innerHTML = `${item.arrow}<span>${label}</span>`;
+                btn.onclick = () => { selectedType = realType; renderCompass(); };
+                container.appendChild(btn);
+            });
+        }
+
+        const canvasContainer = document.getElementById('pitch-canvas-container');
+        const judgeDisplay = document.getElementById('judge-display');
+
+        function handleInput(e) {
+            const rect = canvasContainer.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            currentX = Math.round(clientX - rect.left);
+            currentY = Math.round(clientY - rect.top);
+            const isStrike = (currentX >= 70 && currentX <= 250 && currentY >= 90 && currentY <= 310);
+            judgeDisplay.innerText = isStrike ? "STRIKE" : "BALL";
+            judgeDisplay.style.color = isStrike ? (isStrike ? "var(--success)" : "var(--accent)") : "#888";
+            
+            clearTempMarkers();
+            const temp = document.createElement('div');
+            temp.className = 'marker temp-marker';
+            temp.style.left = currentX + 'px'; temp.style.top = currentY + 'px';
+            temp.style.background = '#000';
+            canvasContainer.appendChild(temp);
+        }
+
+        canvasContainer.addEventListener('mousedown', handleInput);
+        canvasContainer.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); });
+
+        function clearTempMarkers() { document.querySelectorAll('.temp-marker').forEach(m => m.remove()); }
+        function clearCanvasMarkers() { document.querySelectorAll('.marker:not(.temp-marker)').forEach(m => m.remove()); }
+
+        function recordPitch() {
+            if (currentX === null) return alert("コースを選択してください");
+            const data = {
+                id: Date.now(),
+                pitcher: document.getElementById('pitcher-name').value,
+                pHand: document.getElementById('pitcher-hand').checked ? "L" : "R",
+                batter: document.getElementById('batter-name').value,
+                bSide: document.getElementById('batter-side').checked ? "L" : "R",
+                type: selectedType,
+                speed: document.getElementById('speed-slider').value,
+                x: currentX, y: currentY,
+                judge: (currentX >= 70 && currentX <= 250 && currentY >= 90 && currentY <= 310) ? "Strike" : "Ball"
+            };
+            pitchData.push(data);
+            refreshUI();
+            currentX = null; currentY = null;
+            clearTempMarkers();
+        }
+
+        function deletePitch(id) {
+            if (!confirm("この一球を削除しますか？")) return;
+            pitchData = pitchData.filter(p => p.id !== id);
+            refreshUI();
+        }
+
+        function refreshUI() {
+            updateTable();
+            drawHeatmap();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('log-body');
+            tbody.innerHTML = '';
+            [...pitchData].reverse().forEach((p, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${pitchData.length - index}</td>
+                    <td>${p.pitcher}(${p.pHand})</td>
+                    <td>${p.batter}(${p.bSide})</td>
+                    <td>${p.type}</td>
+                    <td>${p.speed}</td>
+                    <td style="font-weight:bold; color:${p.judge==='Strike'?'green':'red'}">${p.judge}</td>
+                    <td><button class="delete-btn" onclick="deletePitch(${p.id})">削除</button></td>
+                `;
+            });
+        }
+
+        function drawHeatmap() {
+            const canvas = document.getElementById('heatmap-layer');
+            const ctx = canvas.getContext('2d');
+            const filter = document.getElementById('heatmap-filter').value;
+            const currentBatter = document.getElementById('batter-name').value;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            clearCanvasMarkers();
+
+            pitchData.filter(p => p.batter === currentBatter && (filter === 'All' || p.type === filter)).forEach(p => {
+                const m = document.createElement('div');
+                m.className = 'marker';
+                m.style.left = p.x + 'px'; m.style.top = p.y + 'px';
+                m.style.background = pitchColors[p.type];
+                canvasContainer.appendChild(m);
+
+                const grad = ctx.createRadialGradient(p.x, p.y, 5, p.x, p.y, 30);
+                grad.addColorStop(0, 'rgba(255, 69, 0, 0.4)');
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(p.x - 30, p.y - 30, 60, 60);
+            });
+        }
+
+        function downloadCSV() {
+            let csv = "No,Pitcher,P-Hand,Batter,B-Side,Type,Speed,Judge,X,Y\n";
+            pitchData.forEach((p, i) => csv += `${i+1},${p.pitcher},${p.pHand},${p.batter},${p.bSide},${p.type},${p.speed},${p.judge},${p.x},${p.y}\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'pitch_master_data.csv'; a.click();
+        }
+
+        renderCompass();
+    </script>
+</body>
+</html>
