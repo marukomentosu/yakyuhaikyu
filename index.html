@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Master | htmlマン</title>
+    <title>Elite Scout - Final Master | htmlマン</title>
     <style>
         :root {
             --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5;
-            --btn-idle: #ffffff; --btn-active: #0a2e5c; --success: #2b9348;
+            --success: #2b9348; --danger: #d90429;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -16,243 +16,171 @@
             display: flex; flex-direction: column;
         }
 
-        /* ヘッダー設定：3カラムで極小化 */
-        .top-settings {
-            display: grid; grid-template-columns: 1fr 1fr 0.7fr; gap: 4px;
-            background: #fff; padding: 4px; border-radius: 8px; font-size: 0.65rem;
+        /* ヘッダー：極限まで圧縮 */
+        .header-config {
+            display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 4px;
+            background: #fff; padding: 4px; border-radius: 6px; font-size: 0.6rem;
         }
-        .input-mini { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 2px; font-size: 0.7rem; }
-        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #eee; padding: 2px 5px; border-radius: 10px; margin-top: 2px; }
+        .input-mini { width: 100%; border: 1px solid #ccc; border-radius: 3px; padding: 2px; font-size: 0.7rem; }
         
-        /* トグルスイッチ */
-        .switch { position: relative; width: 30px; height: 14px; }
+        .switch-box { display: flex; align-items: center; justify-content: space-between; background: #eee; padding: 2px 4px; border-radius: 10px; margin-top: 2px; }
+        .switch { position: relative; width: 28px; height: 14px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #2196F3; transition: .3s; border-radius: 20px; }
         .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 2px; bottom: 2px; background: #fff; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background: #f44336; }
-        input:checked + .slider:before { transform: translateX(16px); }
+        input:checked + .slider:before { transform: translateX(14px); }
 
-        /* フィルタ・クリア */
-        .filter-bar { display: flex; gap: 3px; margin: 3px 0; }
-        .sel-mini { flex: 1; font-size: 0.6rem; padding: 2px; border-radius: 4px; border: 1px solid #ddd; background: #fff; }
+        /* フィルタバー */
+        .filter-row { display: flex; gap: 4px; margin: 3px 0; }
+        .sel-mini { flex: 1; font-size: 0.6rem; height: 20px; border-radius: 4px; border: 1px solid #ddd; background: #fff; }
 
-        /* キャンバスエリア */
-        .main-view { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        #pitch-canvas-container {
-            position: relative; width: 100%; max-width: 240px; aspect-ratio: 3 / 3.6;
-            background: #333; border: 3px solid #222; border-radius: 8px; touch-action: none;
+        /* メインビュー（キャンバス） */
+        .canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; min-height: 180px; }
+        #canvas-wrap {
+            position: relative; width: 100%; max-width: 220px; aspect-ratio: 3 / 3.6;
+            background: #333; border: 2px solid #222; border-radius: 6px; touch-action: none;
         }
-        #strike-zone-box { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.4); pointer-events: none; }
-        canvas#heatmap-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.8; }
-        .marker { position: absolute; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); border: 1px solid #fff; pointer-events: none; }
+        #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.2px solid rgba(255,255,255,0.4); pointer-events: none; }
+        canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.8; }
+        .dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); border: 0.8px solid #fff; pointer-events: none; }
 
         /* 操作パネル */
-        .control-panel { background: #fff; padding: 5px; border-radius: 8px; }
-        .speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .speed-val { font-size: 0.9rem; font-weight: bold; color: var(--accent); min-width: 75px; }
+        .control-panel { background: #fff; padding: 4px; border-radius: 6px; }
+        #speed-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
+        .speed-txt { font-size: 0.85rem; font-weight: bold; color: var(--accent); min-width: 65px; }
         
-        .input-grid { display: grid; grid-template-columns: 145px 1fr; gap: 5px; }
+        .input-main { display: grid; grid-template-columns: 135px 1fr; gap: 4px; }
         
-        .pitch-compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-        .pitch-btn { aspect-ratio: 1/1; border: 1px solid #ddd; border-radius: 5px; background: #fff; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .pitch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .pitch-btn span { font-size: 0.4rem; font-weight: bold; }
+        /* 9球種コンパス */
+        .compass-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+        .p-btn { aspect-ratio: 1/1; border: 1px solid #ddd; border-radius: 4px; background: #fff; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
+        .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .p-btn span { font-size: 0.35rem; font-weight: 700; line-height: 1; margin-top: 1px; }
 
-        .result-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
-        .res-btn { font-size: 0.65rem; font-weight: bold; border: 1px solid #ddd; border-radius: 4px; background: #fff; padding: 0; }
-        .res-btn.active { background: #666; color: white; }
+        .res-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
+        .r-btn { font-size: 0.65rem; font-weight: bold; border: 1px solid #ddd; border-radius: 4px; background: #fff; padding: 2px 0; }
+        .r-btn.active { background: #666; color: white; }
 
-        .action-btns { display: grid; grid-template-columns: 2fr 1fr; gap: 4px; margin-top: 5px; }
-        .btn { padding: 8px; border: none; border-radius: 6px; font-weight: bold; color: #fff; font-size: 0.8rem; }
-        .btn-record { background: var(--primary); }
-        .btn-csv { background: var(--success); }
+        .action-row { display: grid; grid-template-columns: 2fr 1fr; gap: 4px; margin-top: 4px; }
+        .btn-cmd { padding: 6px; border: none; border-radius: 4px; font-weight: bold; color: #fff; font-size: 0.75rem; }
+        .b-rec { background: var(--primary); }
+        .b-csv { background: var(--success); }
 
-        /* 履歴（超コンパクト） */
-        .history { margin-top: 4px; border-top: 1px solid #ddd; font-size: 0.55rem; height: 55px; overflow-y: auto; background: #fff; }
+        /* 履歴：極小 */
+        .log-area { margin-top: 3px; border-top: 1px solid #ddd; font-size: 0.55rem; height: 50px; overflow-y: auto; background: #fff; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: var(--primary); color: white; padding: 2px; position: sticky; top: 0; }
+        th { background: var(--primary); color: white; padding: 1px; position: sticky; top: 0; }
         td { text-align: center; padding: 1px; border-bottom: 1px solid #eee; }
-        .del-btn { background: var(--danger); color: #fff; border: none; border-radius: 2px; padding: 1px 4px; font-size: 0.5rem; }
     </style>
 </head>
 <body>
 
-    <div class="top-settings">
+    <div class="header-config">
         <div>
             <input type="text" id="p-name" class="input-mini" value="投手A">
-            <div class="switch-container">
-                <span>右</span>
-                <label class="switch"><input type="checkbox" id="p-hand" onchange="renderCompass()"><span class="slider"></span></label>
-                <span>左</span>
-            </div>
+            <div class="switch-box"><span>右</span><label class="switch"><input type="checkbox" id="p-hand"><span class="slider"></span></label><span>左</span></div>
         </div>
         <div>
             <input type="text" id="b-name" class="input-mini" value="打者A">
-            <div class="switch-container">
-                <span>右</span>
-                <label class="switch"><input type="checkbox" id="b-side"><span class="slider"></span></label>
-                <span>左</span>
-            </div>
+            <div class="switch-box"><span>右</span><label class="switch"><input type="checkbox" id="b-side"><span class="slider"></span></label><span>左</span></div>
         </div>
-        <div>
-            <div class="switch-container" style="margin-top:0;">
-                <span style="font-size:0.55rem">球速</span>
-                <label class="switch"><input type="checkbox" id="speed-enable" checked onchange="toggleSpeedUI()"><span class="slider"></span></label>
-            </div>
-            <button onclick="clearAllData()" style="width:100%; margin-top:3px; font-size:0.5rem; background:#999; color:#fff; border:none; border-radius:4px; padding:2px;">リセット</button>
+        <div style="text-align:right;">
+            <div class="switch-box"><span style="font-size:0.5rem">球速</span><label class="switch"><input type="checkbox" id="sp-on" checked onchange="toggleSp()"><span class="slider"></span></label></div>
+            <button onclick="resetData()" style="width:100%;margin-top:2px;font-size:0.5rem;background:#999;color:#fff;border:none;border-radius:3px;">リセット</button>
         </div>
     </div>
 
-    <div class="filter-bar">
-        <select id="filter-matchup" class="sel-mini" onchange="refreshUI()">
-            <option value="All">全対戦</option><option value="R-R">R-R</option><option value="R-L">R-L</option><option value="L-R">L-R</option><option value="L-L">L-L</option>
-        </select>
-        <select id="filter-type" class="sel-mini" onchange="refreshUI()">
+    <div class="filter-row">
+        <select id="f-match" class="sel-mini" onchange="draw()"><option value="All">全対戦</option><option value="R-R">R-R</option><option value="R-L">R-L</option><option value="L-R">L-R</option><option value="L-L">L-L</option></select>
+        <select id="f-type" class="sel-mini" onchange="draw()">
             <option value="All">全球種</option>
-            <option value="ストレート">直球</option><option value="スライダー">スラ</option><option value="カーブ">曲</option>
-            <option value="フォーク">フォ</option><option value="チェンジ">チェ</option><option value="シュート">シュ</option>
-            <option value="シンカー">シン</option><option value="カット">カット</option><option value="ライズ">ライ</option>
+            <option value="直球">直球</option><option value="カット">カット</option><option value="ライズ">ライズ</option><option value="シュート">シュート</option>
+            <option value="スライダー">スライダー</option><option value="シンカー">シンカー</option><option value="カーブ">カーブ</option><option value="フォーク">フォーク</option><option value="チェンジ">チェンジ</option>
         </select>
     </div>
 
-    <div class="main-view">
-        <div id="pitch-canvas-container">
-            <canvas id="heatmap-layer" width="300" height="360"></canvas>
-            <div id="strike-zone-box"></div>
+    <div class="canvas-area">
+        <div id="canvas-wrap">
+            <canvas id="h-layer" width="300" height="360"></canvas>
+            <div id="s-zone"></div>
         </div>
     </div>
 
     <div class="control-panel">
-        <div class="speed-row" id="speed-controls">
-            <span id="speed-num" class="speed-val">140 km/h</span>
-            <input type="range" id="speed-slider" min="80" max="170" value="140" oninput="document.getElementById('speed-num').innerText = this.value + ' km/h'" style="flex:1;">
+        <div id="speed-row">
+            <span id="sp-val" class="speed-txt">140 km/h</span>
+            <input type="range" id="sp-sld" min="80" max="170" value="140" oninput="document.getElementById('sp-val').innerText=this.value+' km/h'" style="flex:1;height:18px;">
         </div>
-
-        <div class="input-grid">
-            <div class="pitch-compass" id="compass"></div>
-            <div class="result-group">
-                <button class="res-btn active" onclick="setRes(this,'空振り')">空振</button>
-                <button class="res-btn" onclick="setRes(this,'見逃')">見逃</button>
-                <button class="res-btn" onclick="setRes(this,'安打')">安打</button>
-                <button class="res-btn" onclick="setRes(this,'凡打')">凡打</button>
-                <button class="res-btn" onclick="setRes(this,'ファウル')">F</button>
-                <button class="res-btn" onclick="setRes(this,'ボール')">B</button>
+        <div class="input-main">
+            <div class="compass-grid" id="comp"></div>
+            <div class="res-grid" id="res">
+                <button class="r-btn active" onclick="setR(this,'空振り')">空振</button><button class="r-btn" onclick="setR(this,'見逃し')">見逃</button>
+                <button class="r-btn" onclick="setR(this,'安打')">安打</button><button class="r-btn" onclick="setR(this,'凡打')">凡打</button>
+                <button class="r-btn" onclick="setR(this,'ファウル')">F</button><button class="r-btn" onclick="setR(this,'ボール')">B</button>
             </div>
         </div>
-
-        <div class="action-btns">
-            <button class="btn btn-record" onclick="recordPitch()">記録</button>
-            <button class="btn btn-csv" onclick="downloadCSV()">CSV保存</button>
+        <div class="action-row">
+            <button class="btn-cmd b-rec" onclick="record()">記録</button>
+            <button class="btn-cmd b-csv" onclick="save()">CSV保存</button>
         </div>
     </div>
 
-    <div class="history">
-        <table>
-            <thead><tr><th>No</th><th>対戦</th><th>球種</th><th>結果</th><th>km</th><th>消</th></tr></thead>
-            <tbody id="log-body"></tbody>
-        </table>
-    </div>
+    <div class="log-area"><table><thead><tr><th>No</th><th>Match</th><th>球種</th><th>結果</th><th>km</th></tr></thead><tbody id="tbody"></tbody></table></div>
 
     <script>
-        let currentX = null, currentY = null, selectedType = 'ストレート', selectedResult = '空振り';
-        let pitchData = JSON.parse(localStorage.getItem('pitchData_master_v3')) || [];
-
-        const pitchColors = { 'ストレート': '#e74c3c', 'カーブ': '#3498db', 'スライダー': '#2ecc71', 'フォーク': '#f39c12', 'チェンジ': '#9b59b6', 'シュート': '#1abc9c', 'シンカー': '#d35400', 'カット': '#34495e', 'ライズ': '#f1c40f' };
-        
-        // 全9球種の配置（左下は絶対カーブ）
-        const compassMap = [
-            { pos: 'ul', arrow: '↖', label: 'カット' }, { pos: 'u',  arrow: '↑', label: 'ライズ' }, { pos: 'ur', arrow: '↗', label: 'シュート' },
-            { pos: 'l',  arrow: '←', label: 'スライダー' }, { pos: 'c',  arrow: '◯', label: '直球' }, { pos: 'r',  arrow: '→', label: 'シンカー' },
-            { pos: 'dl', arrow: '↙', label: 'カーブ' }, { pos: 'd',  arrow: '↓', label: 'フォーク' }, { pos: 'dr', arrow: '↘', label: 'チェンジ' }
+        let curX=null, curY=null, selT='直球', selR='空振り', db=JSON.parse(localStorage.getItem('scout_db'))||[];
+        const colors = {'直球':'#e74c3c','カーブ':'#3498db','スライダー':'#2ecc71','フォーク':'#f39c12','チェンジ':'#9b59b6','シュート':'#1abc9c','シンカー':'#d35400','カット':'#34495e','ライズ':'#f1c40f'};
+        const map = [
+            {a:'↖',l:'カット'},{a:'↑',l:'ライズ'},{a:'↗',l:'シュート'},
+            {a:'←',l:'スライダー'},{a:'◯',l:'直球'},{a:'→',l:'シンカー'},
+            {a:'↙',l:'カーブ'},{a:'↓',l:'フォーク'},{a:'↘',l:'チェンジ'}
         ];
 
-        function renderCompass() {
-            const container = document.getElementById('compass');
-            container.innerHTML = '';
-            compassMap.forEach(item => {
-                const realType = (item.label === '直球' ? 'ストレート' : item.label);
-                const btn = document.createElement('button');
-                btn.className = `pitch-btn ${selectedType === realType ? 'active' : ''}`;
-                btn.innerHTML = `${item.arrow}<span>${item.label}</span>`;
-                btn.onclick = () => { selectedType = realType; renderCompass(); };
-                container.appendChild(btn);
+        function renderComp() {
+            const c=document.getElementById('comp'); c.innerHTML='';
+            map.forEach(i=>{
+                const b=document.createElement('button'); b.className=`p-btn ${selT===i.l?'active':''}`;
+                b.innerHTML=`${i.a}<span>${i.l}</span>`; b.onclick=()=>{selT=i.l; renderComp();}; c.appendChild(b);
             });
         }
+        function setR(b,r){document.querySelectorAll('.r-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); selR=r;}
+        function toggleSp(){document.getElementById('speed-row').style.display=document.getElementById('sp-on').checked?'flex':'none';}
 
-        function toggleSpeedUI() {
-            const enabled = document.getElementById('speed-enable').checked;
-            document.getElementById('speed-controls').style.opacity = enabled ? "1" : "0.2";
-            document.getElementById('speed-slider').disabled = !enabled;
+        const wrap=document.getElementById('canvas-wrap');
+        function tap(e){
+            const r=wrap.getBoundingClientRect(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY;
+            curX=Math.round(((x-r.left)/r.width)*300); curY=Math.round(((y-r.top)/r.height)*360);
+            document.querySelectorAll('.tmp').forEach(m=>m.remove());
+            const t=document.createElement('div'); t.className='dot tmp'; t.style.left=(curX/300*100)+'%'; t.style.top=(curY/360*100)+'%'; t.style.background='#000'; wrap.appendChild(t);
         }
+        wrap.addEventListener('mousedown',tap); wrap.addEventListener('touchstart',e=>{e.preventDefault();tap(e);});
 
-        function setRes(btn, r) { document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); selectedResult = r; }
-
-        const canvasContainer = document.getElementById('pitch-canvas-container');
-        function handleIn(e) {
-            const rect = canvasContainer.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            currentX = Math.round(((cx - rect.left) / rect.width) * 300);
-            currentY = Math.round(((cy - rect.top) / rect.height) * 360);
-            document.querySelectorAll('.temp').forEach(m => m.remove());
-            const t = document.createElement('div'); t.className = 'marker temp';
-            t.style.left = (currentX/300*100)+'%'; t.style.top = (currentY/360*100)+'%';
-            t.style.background = '#000'; canvasContainer.appendChild(t);
+        function record(){
+            if(curX===null) return alert("コースを選択！");
+            const ph=document.getElementById('p-hand').checked?'L':'R'; const bs=document.getElementById('b-side').checked?'L':'R';
+            db.push({id:Date.now(),p:document.getElementById('p-name').value,ph,b:document.getElementById('b-name').value,bs,m:`${ph}-${bs}`,t:selT,r:selR,s:document.getElementById('sp-on').checked?document.getElementById('sp-sld').value:'-',x:curX,y:curY});
+            localStorage.setItem('scout_db',JSON.stringify(db)); draw(); curX=null; document.querySelectorAll('.tmp').forEach(m=>m.remove());
         }
-        canvasContainer.addEventListener('mousedown', handleIn);
-        canvasContainer.addEventListener('touchstart', (e) => { e.preventDefault(); handleIn(e); });
-
-        function recordPitch() {
-            if (currentX === null) return alert("コースを選択！");
-            const ph = document.getElementById('p-hand').checked ? "L" : "R";
-            const bs = document.getElementById('b-side').checked ? "L" : "R";
-            const speedEnabled = document.getElementById('speed-enable').checked;
-            const data = {
-                id: Date.now(),
-                pName: document.getElementById('p-name').value, pHand: ph,
-                bName: document.getElementById('b-name').value, bSide: bs,
-                matchup: `${ph}-${bs}`, type: selectedType, res: selectedResult,
-                speed: speedEnabled ? document.getElementById('speed-slider').value : "-",
-                x: currentX, y: currentY
-            };
-            pitchData.push(data);
-            localStorage.setItem('pitchData_master_v3', JSON.stringify(pitchData));
-            refreshUI();
-            currentX = null; document.querySelectorAll('.temp').forEach(m => m.remove());
-        }
-
-        function deletePitch(id) { if(confirm("消去？")) { pitchData = pitchData.filter(p => p.id !== id); localStorage.setItem('pitchData_master_v3', JSON.stringify(pitchData)); refreshUI(); } }
-        function clearAllData() { if(confirm("全データ消去？")) { pitchData = []; localStorage.removeItem('pitchData_master_v3'); refreshUI(); } }
-
-        function refreshUI() {
-            const mFilter = document.getElementById('filter-matchup').value;
-            const tFilter = document.getElementById('filter-type').value;
-            const tbody = document.getElementById('log-body');
-            tbody.innerHTML = '';
-            const filtered = pitchData.filter(p => (mFilter==='All' || p.matchup===mFilter) && (tFilter==='All' || p.type===tFilter));
-            [...filtered].reverse().forEach((p, i) => {
-                const row = tbody.insertRow();
-                row.innerHTML = `<td>${filtered.length-i}</td><td>${p.matchup}</td><td>${p.type}</td><td>${p.res}</td><td>${p.speed}</td><td><button class="del-btn" onclick="deletePitch(${p.id})">×</button></td>`;
+        function resetData(){if(confirm("全消去？")){db=[];localStorage.removeItem('scout_db');draw();}}
+        function draw(){
+            const mf=document.getElementById('f-match').value; const tf=document.getElementById('f-type').value; const tb=document.getElementById('tbody'); tb.innerHTML='';
+            const f=db.filter(x=>(mf==='All'||x.m===mf)&&(tf==='All'||x.t===tf));
+            const ctx=document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360); document.querySelectorAll('.dot:not(.tmp)').forEach(m=>m.remove());
+            [...f].reverse().slice(0,10).forEach((x,i)=>{
+                const r=tb.insertRow(); r.innerHTML=`<td>${f.length-i}</td><td>${x.m}</td><td>${x.t}</td><td>${x.r}</td><td>${x.s}</td>`;
             });
-            const cv = document.getElementById('heatmap-layer'); const ctx = cv.getContext('2d');
-            ctx.clearRect(0, 0, 300, 360); document.querySelectorAll('.marker:not(.temp)').forEach(m => m.remove());
-            filtered.forEach(p => {
-                const m = document.createElement('div'); m.className = 'marker';
-                m.style.left = (p.x/300*100)+'%'; m.style.top = (p.y/360*100)+'%';
-                m.style.background = pitchColors[p.type] || '#fff'; canvasContainer.appendChild(m);
-                const g = ctx.createRadialGradient(p.x, p.y, 5, p.x, p.y, 18);
-                g.addColorStop(0, 'rgba(255, 69, 0, 0.4)'); g.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                ctx.fillStyle = g; ctx.fillRect(p.x - 18, p.y - 18, 36, 36);
+            f.forEach(p=>{
+                const m=document.createElement('div'); m.className='dot'; m.style.left=(p.x/300*100)+'%'; m.style.top=(p.y/360*100)+'%'; m.style.background=colors[p.t]||'#fff'; wrap.appendChild(m);
+                const g=ctx.createRadialGradient(p.x,p.y,5,p.x,p.y,15); g.addColorStop(0,'rgba(255,69,0,0.4)'); g.addColorStop(1,'rgba(255,255,255,0)'); ctx.fillStyle=g; ctx.fillRect(p.x-15,p.y-15,30,30);
             });
         }
-
-        function downloadCSV() {
-            let c = "No,Pitcher,P-Hand,Batter,B-Side,Matchup,Type,Result,Speed,X,Y\n";
-            pitchData.forEach((p, i) => c += `${i+1},${p.pName},${p.pHand},${p.bName},${p.bSide},${p.matchup},${p.type},${p.res},${p.speed},${p.x},${p.y}\n`);
-            const b = new Blob([c], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'pitch_ultimate.csv'; a.click();
+        function save(){
+            let c="No,Pitcher,P-Hand,Batter,B-Side,Match,Type,Result,Speed,X,Y\n";
+            db.forEach((x,i)=>c+=`${i+1},${x.p},${x.ph},${x.b},${x.bs},${x.m},${x.t},${x.r},${x.s},${x.x},${x.y}\n`);
+            const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'})); a.download='scout_data.csv'; a.click();
         }
-
-        renderCompass(); refreshUI();
+        renderComp(); draw(); toggleSp();
     </script>
 </body>
 </html>
