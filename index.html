@@ -3,69 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Pitch Select | htmlマン</title>
+    <title>Elite Scout - Analytics | htmlマン</title>
     <style>
         :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --success: #2b9348; --undo: #f39c12; --danger: #d90429; --share: #00b900; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
-        
         body { margin: 0; padding: 4px; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
 
         .header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 4px; }
-        .header h1 { font-size: 0.85rem; margin: 0; }
+        .header h1 { font-size: 0.8rem; margin: 0; }
         .btn-settings { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
 
         .main-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 4px; }
 
-        /* ゾーン（見切れないよう最大化） */
-        .map-area { flex: 1.4; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
+        /* ゾーン */
+        .map-area { flex: 1.5; display: flex; justify-content: center; align-items: center; position: relative; min-height: 0; }
         #canvas-wrap { position: relative; height: 98%; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; touch-action: none; }
         #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.4); pointer-events: none; }
         canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 1.5px solid #fff; pointer-events: none; z-index: 5; }
 
-        /* 操作パネル */
+        /* 操作パネル：グリッド固定 */
         .ctrl-panel { flex: 0 0 auto; background: #fff; padding: 6px; border-radius: 10px; }
-        .speed-row { display: none; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .speed-txt { font-size: 0.8rem; font-weight: bold; color: var(--accent); min-width: 75px; }
-
-        .compass { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
-        .p-btn { width: 31%; aspect-ratio: 2/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
+        .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; justify-items: center; }
+        .p-btn { width: 100%; aspect-ratio: 1.8/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
         .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .p-btn.hidden { visibility: hidden; pointer-events: none; }
         .p-btn span { font-size: 0.5rem; margin-top: 1px; }
 
         .action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 6px; margin-top: 6px; }
-        .btn-main { padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.95rem; }
+        .btn-main { padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.9rem; }
         .b-undo { background: var(--undo); }
         .b-rep { background: var(--success); }
 
-        /* 履歴（モノクロ） */
-        .history-list { flex: 0.7; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 2px; }
-        .h-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
-        .h-table th { background: #eee; position: sticky; top: 0; padding: 4px; font-size: 0.65rem; color: #333; }
-        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 4px; color: #333; }
-        .h-table tr:first-child td { font-weight: bold; background: #f9f9f9; }
+        /* 履歴 */
+        .history-list { flex: 0.8; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 2px; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: center; }
+        .h-table th { background: #eee; position: sticky; top: 0; padding: 4px; font-size: 0.65rem; }
+        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 4px; }
 
         /* 設定モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 10px; }
-        .modal-content { background: #fff; width: 100%; max-width: 350px; padding: 15px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: #fff; width: 95%; max-width: 380px; padding: 15px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
         .m-row { margin-bottom: 12px; }
-        .m-row label { display: block; font-size: 0.7rem; font-weight: bold; margin-bottom: 4px; }
-        .m-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+        .m-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 4px;}
         
-        .pitch-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #f8f9fa; padding: 8px; border-radius: 8px; }
-        .pitch-opt { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; }
-        .pitch-opt input { width: 16px; height: 16px; }
+        .pitch-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 5px; }
+        .pitch-table th { text-align: left; padding-bottom: 4px; color: #666; }
+        .pitch-table td { padding: 4px 0; border-bottom: 1px solid #eee; }
+        .pitch-table input { width: 16px; height: 16px; vertical-align: middle; }
 
-        .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 6px 10px; border-radius: 15px; font-size: 0.75rem; }
-        .switch { position: relative; width: 36px; height: 18px; }
+        .sw-group { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 6px 10px; border-radius: 15px; font-size: 0.75rem; margin-top: 4px;}
+        .switch { position: relative; width: 36px; height: 18px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 20px; cursor: pointer; }
         .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background: var(--primary); }
         input:checked + .slider:before { transform: translateX(18px); }
-
-        #report-img { width: 100%; border-radius: 6px; margin: 8px 0; border: 1px solid #ccc; }
-        .share-btn { background: var(--share); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -84,13 +77,7 @@
         </div>
         
         <div class="ctrl-panel">
-            <div id="sp-area" class="speed-row">
-                <span id="sp-val" class="speed-txt">140 km/h</span>
-                <input type="range" id="sp-sld" min="80" max="170" value="140" oninput="document.getElementById('sp-val').innerText=this.value+' km/h'" style="flex:1;">
-            </div>
-            
             <div class="compass" id="comp"></div>
-            
             <div class="action-row">
                 <button class="btn-main b-undo" onclick="undo()">取り消し</button>
                 <button class="btn-main b-rep" onclick="generateReport()">レポート作成・共有</button>
@@ -107,31 +94,31 @@
 
     <div id="settings-modal" class="modal" onclick="closeModal(event, 'settings-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin-top:0">⚙️ 試合設定</h3>
-            <div class="m-row"><label>投手 / 打者</label>
-                <input type="text" id="p-name" class="m-input" value="投手A" onchange="syncUI()" style="margin-bottom:4px">
+            <h3 style="margin-top:0">⚙️ 詳細設定</h3>
+            <div class="m-row">
+                <input type="text" id="p-name" class="m-input" value="投手A" onchange="syncUI()" placeholder="投手名">
                 <div class="sw-group"><span>右投</span><label class="switch"><input type="checkbox" id="p-hand" onchange="syncUI()"><span class="slider"></span></label><span>左投</span></div>
-                <input type="text" id="b-name" class="m-input" value="打者A" onchange="syncUI()" style="margin:4px 0">
+                <input type="text" id="b-name" class="m-input" value="打者A" onchange="syncUI()" placeholder="打者名" style="margin-top:8px">
                 <div class="sw-group"><span>右打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncUI()"><span class="slider"></span></label><span>左打</span></div>
             </div>
 
             <div class="m-row">
-                <label>球種表示設定</label>
-                <div class="pitch-selector" id="pitch-config"></div>
+                <table class="pitch-table">
+                    <thead><tr><th>球種</th><th>ボタン</th><th>マップ</th></tr></thead>
+                    <tbody id="pitch-config-body"></tbody>
+                </table>
             </div>
 
-            <div class="m-row"><div class="sw-group"><span>球速 OFF</span><label class="switch"><input type="checkbox" id="sp-on" onchange="syncUI()"><span class="slider"></span></label><span>ON</span></div></div>
-            
             <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main" style="width:100%; background:var(--primary)">完了</button>
-            <button onclick="resetAll()" style="width:100%; margin-top:12px; background:none; border:none; color:var(--danger); font-size:0.7rem;">全記録消去</button>
+            <button onclick="resetAll()" style="width:100%; margin-top:12px; background:none; border:none; color:var(--danger); font-size:0.7rem;">全記録リセット</button>
         </div>
     </div>
 
     <div id="report-modal" class="modal" onclick="closeModal(event, 'report-modal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin:0">📸 レポート完成</h3>
-            <img id="report-img" src="">
-            <button class="share-btn" onclick="shareReport()">📤 アプリで共有する</button>
+            <h3 style="margin:0">📸 レポート生成</h3>
+            <img id="report-img" style="width:100%; border:1px solid #ccc; border-radius:6px; margin:10px 0;">
+            <button class="btn-main" style="background:var(--share); width:100%" onclick="shareReport()">📤 共有する</button>
             <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main" style="width:100%; margin-top:8px; background:#666;">閉じる</button>
         </div>
     </div>
@@ -141,41 +128,38 @@
         const colors = {'直球':'#e74c3c','カーブ':'#3498db','スライダー':'#2ecc71','フォーク':'#f39c12','チェンジ':'#9b59b6','シュート':'#1abc9c','シンカー':'#d35400','カット':'#34495e','ライズ':'#f1c40f'};
         const pitchLayout = [{a:'↖', r:'カット', l:'シュート'}, {a:'↑', r:'ライズ', l:'ライズ'}, {a:'↗', r:'シュート', l:'カット'},{a:'←', r:'スライダー', l:'シンカー'}, {a:'◯', r:'直球', l:'直球'}, {a:'→', r:'シンカー', l:'スライダー'},{a:'↙', r:'カーブ', l:'チェンジ'}, {a:'↓', r:'フォーク', l:'フォーク'}, {a:'↘', r:'チェンジ', l:'カーブ'}];
         
-        // 球種の有効状態（初期は全部ON）
-        let enabledPitches = {'直球':true, 'カーブ':true, 'スライダー':true, 'フォーク':true, 'チェンジ':true, 'シュート':true, 'シンカー':true, 'カット':true, 'ライズ':true};
+        // 設定データ：ボタン表示とマップ表示を個別に管理
+        let pitchConfig = {
+            '直球': {btn: true, map: true}, 'カーブ': {btn: true, map: true}, 'スライダー': {btn: true, map: true},
+            'フォーク': {btn: true, map: true}, 'チェンジ': {btn: true, map: true}, 'シュート': {btn: true, map: true},
+            'シンカー': {btn: true, map: true}, 'カット': {btn: true, map: true}, 'ライズ': {btn: true, map: true}
+        };
 
-        function initPitchConfig() {
-            const container = document.getElementById('pitch-config');
-            container.innerHTML = '';
-            Object.keys(enabledPitches).forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'pitch-opt';
-                div.innerHTML = `<input type="checkbox" id="chk-${p}" ${enabledPitches[p]?'checked':''} onchange="togglePitch('${p}')"> <label for="chk-${p}">${p}</label>`;
-                container.appendChild(div);
+        function initSettingsTable() {
+            const body = document.getElementById('pitch-config-body');
+            body.innerHTML = '';
+            Object.keys(pitchConfig).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p}</td>
+                    <td><input type="checkbox" ${pitchConfig[p].btn?'checked':''} onchange="pitchConfig['${p}'].btn=this.checked; syncUI();"></td>
+                    <td><input type="checkbox" ${pitchConfig[p].map?'checked':''} onchange="pitchConfig['${p}'].map=this.checked; syncUI();"></td>
+                `;
+                body.appendChild(tr);
             });
-        }
-
-        function togglePitch(name) {
-            enabledPitches[name] = document.getElementById(`chk-${name}`).checked;
-            // 現在の選択球種が無効になったら直球に戻す
-            if (!enabledPitches[selT]) selT = '直球';
-            syncUI();
         }
 
         function syncUI() {
             const isL = document.getElementById('p-hand').checked;
             document.getElementById('title-label').innerText = `${document.getElementById('p-name').value}(${isL?'L':'R'}) vs ${document.getElementById('b-name').value}(${document.getElementById('b-side').checked?'L':'R'})`;
-            document.getElementById('sp-area').style.display = document.getElementById('sp-on').checked ? 'flex' : 'none';
-
+            
             const comp = document.getElementById('comp'); 
             comp.innerHTML = '';
             pitchLayout.forEach(item => {
                 const label = isL ? item.l : item.r;
-                if (!enabledPitches[label]) return; // 無効な球種は表示しない
-
-                const btn = document.createElement('button'); 
-                btn.className = `p-btn ${selT === label ? 'active' : ''}`;
-                btn.innerHTML = `${item.a}<span>${label}</span>`; 
+                const btn = document.createElement('button');
+                btn.className = `p-btn ${selT === label ? 'active' : ''} ${!pitchConfig[label].btn ? 'hidden' : ''}`;
+                btn.innerHTML = `${item.a}<span>${label}</span>`;
                 btn.onclick = () => { selT = label; syncUI(); };
                 comp.appendChild(btn);
             });
@@ -190,49 +174,52 @@
             const yVal = e.touches ? e.touches[0].clientY : e.clientY;
             const x = Math.round(((xVal - r.left) / r.width) * 300);
             const y = Math.round(((yVal - r.top) / r.height) * 360);
-            const spVal = document.getElementById('sp-on').checked ? document.getElementById('sp-sld').value + " km/h" : "-";
-            db.push({t:selT, x:x, y:y, s:spVal});
+            db.push({t:selT, x:x, y:y, s:"-"});
             drawMap(); updateHistory();
         }
         wrap.addEventListener('touchstart', handleTouch);
         wrap.addEventListener('mousedown', handleTouch);
 
-        function undo() {
-            if(db.length > 0) { db.pop(); drawMap(); updateHistory(); }
+        function drawMap() {
+            const ctx = document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360);
+            document.querySelectorAll('.dot').forEach(m=>m.remove());
+            db.forEach(p => {
+                // マップ表示がONの球種だけを描画
+                if (pitchConfig[p.t] && pitchConfig[p.t].map) {
+                    const m=document.createElement('div'); m.className='dot'; m.style.left=(p.x/300*100)+'%'; m.style.top=(p.y/360*100)+'%'; m.style.background=colors[p.t]; wrap.appendChild(m);
+                }
+            });
         }
 
         function updateHistory() {
             const body = document.getElementById('h-body');
-            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:15px;color:#999">タッチして記録</td></tr>' : '';
+            body.innerHTML = db.length === 0 ? '<tr><td colspan="3" style="padding:10px;color:#999">記録なし</td></tr>' : '';
             [...db].reverse().forEach((p, i) => {
                 const row = body.insertRow();
                 row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.s}</td>`;
             });
         }
 
-        function drawMap() {
-            const ctx = document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360);
-            document.querySelectorAll('.dot').forEach(m=>m.remove());
-            db.forEach(p => {
-                const m=document.createElement('div'); m.className='dot'; m.style.left=(p.x/300*100)+'%'; m.style.top=(p.y/360*100)+'%'; m.style.background=colors[p.t]||'#fff'; wrap.appendChild(m);
-            });
-        }
+        function undo() { if(db.length > 0) { db.pop(); drawMap(); updateHistory(); } }
 
         async function generateReport() {
-            if(db.length === 0) return alert("記録なし");
+            if(db.length === 0) return;
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 800;
             ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
             ctx.fillStyle = "#0a2e5c"; ctx.fillRect(0,0,600,80);
-            ctx.fillStyle = "#fff"; ctx.font = "bold 26px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
-            ctx.fillStyle = "#333"; ctx.font = "bold 22px sans-serif"; ctx.fillText(document.getElementById('title-label').innerText, 30, 120);
+            ctx.fillStyle = "#fff"; ctx.font = "bold 24px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
             ctx.save(); ctx.translate(30, 160); ctx.fillStyle = "#222"; ctx.fillRect(0,0,300,360);
             ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.strokeRect(300*0.21, 360*0.22, 300*0.58, 360*0.56);
-            db.forEach(p => { ctx.fillStyle = colors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); }); ctx.restore();
+            db.forEach(p => { 
+                if (pitchConfig[p.t].map) {
+                    ctx.fillStyle = colors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); 
+                }
+            }); ctx.restore();
             ctx.fillStyle = "#000"; ctx.font = "bold 18px sans-serif"; ctx.fillText("【History】", 350, 180);
-            db.slice(-15).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t} (${p.s})`, 350, 210+(i*24)); });
-            document.getElementById('report-img').src = canvas.toDataURL("image/png");
-            canvas.toBlob(blob => { reportBlob = blob; }, "image/png");
+            db.slice(-15).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t}`, 350, 210+(i*24)); });
+            document.getElementById('report-img').src = canvas.toDataURL();
+            canvas.toBlob(b => reportBlob = b);
             openModal('report-modal');
         }
 
@@ -240,15 +227,15 @@
             if (!reportBlob) return;
             const file = new File([reportBlob], "report.png", { type: "image/png" });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try { await navigator.share({ files: [file], title: '投球レポート', text: document.getElementById('title-label').innerText }); } catch (e) {}
-            } else { alert("画像を長押し保存してください"); }
+                await navigator.share({ files: [file], title: '投球レポート' });
+            }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
         function resetAll() { if(confirm("消去？")) { db = []; drawMap(); syncUI(); } }
         
-        initPitchConfig();
+        initSettingsTable();
         syncUI();
     </script>
 </body>
