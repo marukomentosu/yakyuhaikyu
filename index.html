@@ -3,49 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Share | htmlマン</title>
+    <title>Elite Scout - History | htmlマン</title>
     <style>
         :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --success: #2b9348; --danger: #d90429; --share: #00b900; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
         body { margin: 0; padding: 4px; height: 100vh; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
 
-        /* ヘッダー */
         .header { display: flex; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 6px 12px; border-radius: 8px; margin-bottom: 4px; }
         .header h1 { font-size: 0.9rem; margin: 0; }
         .btn-settings { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
 
-        /* メイン */
         .main-layout { flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
-        .map-area { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
-        #canvas-wrap { position: relative; width: 100%; max-width: 210px; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; }
+        .map-area { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; min-height: 150px; }
+        #canvas-wrap { position: relative; width: 100%; max-width: 190px; aspect-ratio: 3 / 3.6; background: #333; border: 3px solid #111; border-radius: 10px; }
         #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 1.5px solid rgba(255,255,255,0.3); pointer-events: none; }
         canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); border: 1.5px solid #fff; pointer-events: none; }
+        .dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); border: 1px solid #fff; pointer-events: none; }
 
-        /* 操作パネル */
-        .ctrl-panel { background: #fff; padding: 8px; border-radius: 12px; }
+        .ctrl-panel { background: #fff; padding: 8px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .speed-txt { font-size: 1rem; font-weight: bold; color: var(--accent); min-width: 75px; }
+        .speed-txt { font-size: 0.9rem; font-weight: bold; color: var(--accent); min-width: 70px; }
 
-        .input-grid { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
+        .input-grid { display: grid; grid-template-columns: 1fr 85px; gap: 6px; }
         .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .p-btn { aspect-ratio: 1.2/1; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
+        .p-btn { aspect-ratio: 1.2/1; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
         .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .p-btn span { font-size: 0.55rem; margin-top: 2px; }
+        .p-btn span { font-size: 0.5rem; margin-top: 2px; }
 
         .res-grid { display: grid; grid-template-columns: 1fr; gap: 4px; }
-        .r-btn { font-size: 0.8rem; font-weight: bold; border: 1.5px solid #eee; border-radius: 8px; background: #f8f9fa; }
+        .r-btn { font-size: 0.75rem; font-weight: bold; border: 1.5px solid #eee; border-radius: 8px; background: #f8f9fa; }
         .r-btn.active { background: #555; color: white; }
 
-        .action-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; margin-top: 8px; }
-        .btn-main { padding: 14px; border: none; border-radius: 10px; font-weight: bold; color: #fff; font-size: 1.1rem; }
+        .action-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; margin-top: 6px; }
+        .btn-main { padding: 12px; border: none; border-radius: 10px; font-weight: bold; color: #fff; font-size: 1rem; }
         .b-rec { background: var(--primary); }
-        .b-rep { background: var(--success); font-size: 0.9rem; }
+        .b-rep { background: var(--success); font-size: 0.85rem; }
+
+        /* ミニ履歴表示 */
+        .history-list { height: 70px; overflow-y: auto; background: #fff; border-radius: 8px; margin-top: 4px; border: 1px solid #ddd; padding: 2px; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; text-align: center; }
+        .h-table th { background: #eee; position: sticky; top: 0; padding: 2px; }
+        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 2px; }
 
         /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
         .modal-content { background: #fff; width: 100%; max-width: 350px; padding: 20px; border-radius: 16px; position: relative; max-height: 90vh; overflow-y: auto; }
-        
         .m-row { margin-bottom: 12px; }
         .m-row label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; }
         .m-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
@@ -57,7 +59,6 @@
         input:checked + .slider { background: var(--primary); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        /* レポート表示用 */
         #report-img { width: 100%; border: 1px solid #ccc; border-radius: 8px; margin: 10px 0; }
         .share-btn { background: var(--share); color: white; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
@@ -95,6 +96,13 @@
                 <button class="btn-main b-rep" onclick="generateReport()">レポート作成</button>
             </div>
         </div>
+        
+        <div class="history-list">
+            <table class="h-table">
+                <thead><tr><th>#</th><th>球種</th><th>結果</th><th>球速</th></tr></thead>
+                <tbody id="h-body"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="settings-modal" class="modal" onclick="closeModal(event, 'settings-modal')">
@@ -116,10 +124,7 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3 style="margin:0">📸 レポート共有</h3>
             <img id="report-img" src="" alt="Report">
-            <button class="btn-main share-btn" id="share-api-btn" onclick="shareReport()">
-                <span>📤 アプリで共有する</span>
-            </button>
-            <p id="share-fallback" style="font-size:0.6rem; color:#666; text-align:center; margin-top:5px; display:none;">※共有ボタンが動かない場合は画像を長押し保存してください</p>
+            <button class="btn-main share-btn" id="share-api-btn" onclick="shareReport()"><span>📤 アプリで共有する</span></button>
             <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main b-rec" style="width:100%; margin-top:10px;">閉じる</button>
         </div>
     </div>
@@ -140,7 +145,7 @@
                 btn.innerHTML = `${item.a}<span>${label}</span>`; btn.onclick = () => { selT = label; syncUI(); };
                 comp.appendChild(btn);
             });
-            drawMap();
+            drawMap(); updateHistory();
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -157,9 +162,17 @@
         wrap.addEventListener('mousedown', tap); wrap.addEventListener('touchstart', e=>{ e.preventDefault(); tap(e); });
 
         function record() {
-            if(curX===null) return alert("投球位置をタップ！");
-            db.push({t:selT, r:selR, x:curX, y:curY, s:document.getElementById('sp-on').checked?document.getElementById('sp-sld').value+"km":"-"});
-            drawMap(); curX=null; document.querySelectorAll('.tmp').forEach(m=>m.remove());
+            if(curX===null) return alert("位置を選択！");
+            db.push({t:selT, r:selR, x:curX, y:curY, s:document.getElementById('sp-on').checked?document.getElementById('sp-sld').value+"k":"-"});
+            drawMap(); updateHistory(); curX=null; document.querySelectorAll('.tmp').forEach(m=>m.remove());
+        }
+
+        function updateHistory() {
+            const body = document.getElementById('h-body'); body.innerHTML = '';
+            [...db].reverse().forEach((p, i) => {
+                const row = body.insertRow();
+                row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.r}</td><td>${p.s}</td>`;
+            });
         }
 
         function drawMap() {
@@ -171,42 +184,29 @@
         }
 
         async function generateReport() {
-            if(db.length === 0) return alert("記録がありません");
+            if(db.length === 0) return alert("記録なし");
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 800;
-            ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,600,800);
+            ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
             ctx.fillStyle = "#0a2e5c"; ctx.fillRect(0,0,600,80);
-            ctx.fillStyle = "#ffffff"; ctx.font = "bold 26px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
+            ctx.fillStyle = "#fff"; ctx.font = "bold 26px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
             ctx.fillStyle = "#333"; ctx.font = "bold 20px sans-serif"; ctx.fillText(document.getElementById('title-label').innerText, 30, 120);
             ctx.save(); ctx.translate(30, 160); ctx.fillStyle = "#222"; ctx.fillRect(0,0,300,360);
             ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.strokeRect(300*0.21, 360*0.22, 300*0.58, 360*0.56);
             db.forEach(p => { ctx.fillStyle = colors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); }); ctx.restore();
-            ctx.fillStyle = "#000"; ctx.font = "bold 16px sans-serif"; ctx.fillText("【Recent Pitches】", 350, 180);
+            ctx.fillStyle = "#000"; ctx.font = "bold 16px sans-serif"; ctx.fillText("【Pitches】", 350, 180);
             db.slice(-15).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t}(${p.s}) - ${p.r}`, 350, 210+(i*22)); });
-            
-            const dataUrl = canvas.toDataURL("image/png");
-            document.getElementById('report-img').src = dataUrl;
-            
-            // Blob作成（共有用）
+            document.getElementById('report-img').src = canvas.toDataURL("image/png");
             canvas.toBlob(blob => { reportBlob = blob; }, "image/png");
             openModal('report-modal');
-            
-            // 共有APIが使えない場合の警告表示
-            if (!navigator.canShare) {
-                document.getElementById('share-fallback').style.display = 'block';
-            }
         }
 
         async function shareReport() {
             if (!reportBlob) return;
-            const file = new File([reportBlob], "scout_report.png", { type: "image/png" });
+            const file = new File([reportBlob], "report.png", { type: "image/png" });
             const shareData = { files: [file], title: '投球レポート', text: document.getElementById('title-label').innerText };
-
-            if (navigator.canShare && navigator.canShare(shareData)) {
-                try { await navigator.share(shareData); } catch (e) { console.log("Share failed", e); }
-            } else {
-                alert("このブラウザは直接共有に対応していません。画像を長押し保存してください。");
-            }
+            if (navigator.canShare && navigator.canShare(shareData)) { try { await navigator.share(shareData); } catch (e) {} }
+            else { alert("長押し保存してください"); }
         }
 
         function resetAll() { if(confirm("消去？")) { db = []; drawMap(); syncUI(); } }
