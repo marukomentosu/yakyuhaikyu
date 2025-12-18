@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Scout - Large Zone | htmlマン</title>
+    <title>Elite Scout - Instant | htmlマン</title>
     <style>
         :root { --primary: #0a2e5c; --accent: #e63946; --bg: #f0f2f5; --success: #2b9348; --danger: #d90429; --share: #00b900; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
@@ -15,36 +15,35 @@
 
         .main-layout { flex: 1; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
         
-        /* ゾーンを大幅に拡大 */
-        .map-area { flex: 2; display: flex; justify-content: center; align-items: center; position: relative; padding: 10px 0; }
-        #canvas-wrap { position: relative; width: 100%; max-width: 260px; aspect-ratio: 3 / 3.6; background: #333; border: 4px solid #111; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        /* ゾーン最大化 */
+        .map-area { flex: 1.5; display: flex; justify-content: center; align-items: center; position: relative; padding: 5px 0; }
+        #canvas-wrap { position: relative; width: 100%; max-width: 280px; aspect-ratio: 3 / 3.6; background: #333; border: 4px solid #111; border-radius: 12px; touch-action: none; }
         #s-zone { position: absolute; top: 22%; left: 21%; width: 58%; height: 56%; border: 2px solid rgba(255,255,255,0.4); pointer-events: none; }
         canvas#h-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; pointer-events: none; }
+        .dot { position: absolute; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid #fff; pointer-events: none; animation: pop 0.2s ease-out; }
+        @keyframes pop { 0% { transform: translate(-50%, -50%) scale(2); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 
         .ctrl-panel { background: #fff; padding: 8px; border-radius: 12px; }
-        .speed-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; display: none; } /* 初期非表示 */
+        .speed-row { display: none; align-items: center; gap: 8px; margin-bottom: 8px; }
         .speed-txt { font-size: 0.9rem; font-weight: bold; color: var(--accent); min-width: 80px; }
 
-        .input-grid { width: 100%; }
         .compass { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .p-btn { aspect-ratio: 1.3/1; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
-        .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .p-btn { aspect-ratio: 1.4/1; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
+        .p-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
         .p-btn span { font-size: 0.6rem; margin-top: 2px; }
 
-        .action-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; margin-top: 8px; }
-        .btn-main { padding: 14px; border: none; border-radius: 10px; font-weight: bold; color: #fff; font-size: 1.1rem; }
-        .b-rec { background: var(--primary); }
-        .b-rep { background: var(--success); font-size: 0.9rem; }
+        .action-row { display: grid; grid-template-columns: 1fr; margin-top: 8px; }
+        .btn-main { padding: 12px; border: none; border-radius: 10px; font-weight: bold; color: #fff; font-size: 1.1rem; background: var(--success); }
 
-        .history-list { height: 80px; overflow-y: auto; background: #fff; border-radius: 8px; margin-top: 4px; border: 1px solid #ddd; }
-        .h-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: center; }
-        .h-table th { background: #eee; position: sticky; top: 0; padding: 4px; }
-        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 4px; }
+        /* 下部の記録表示 */
+        .history-list { flex: 0.6; overflow-y: auto; background: #fff; border-radius: 8px; margin-top: 4px; border: 1px solid #ddd; }
+        .h-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; }
+        .h-table th { background: #eee; position: sticky; top: 0; padding: 6px; font-size: 0.7rem; }
+        .h-table td { border-bottom: 1px solid #f0f0f0; padding: 6px; }
+        .h-table tr:first-child td { background: #fff9c4; font-weight: bold; } /* 最新の記録を強調 */
 
-        /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: #fff; width: 100%; max-width: 350px; padding: 20px; border-radius: 16px; position: relative; }
+        .modal-content { background: #fff; width: 100%; max-width: 350px; padding: 20px; border-radius: 16px; }
         .m-row { margin-bottom: 12px; }
         .m-row label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; }
         .m-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
@@ -57,7 +56,7 @@
         input:checked + .slider:before { transform: translateX(22px); }
 
         #report-img { width: 100%; border: 1px solid #ccc; border-radius: 8px; margin: 10px 0; }
-        .share-btn { background: var(--share); color: white; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .share-btn { background: var(--share); color: white; width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; border:none; padding:15px; border-radius:10px; font-weight:bold;}
     </style>
 </head>
 <body>
@@ -80,19 +79,19 @@
                 <span id="sp-val" class="speed-txt">140 km/h</span>
                 <input type="range" id="sp-sld" min="80" max="170" value="140" oninput="document.getElementById('sp-val').innerText=this.value+' km/h'" style="flex:1;">
             </div>
-            <div class="input-grid">
-                <div class="compass" id="comp"></div>
-            </div>
+            <div class="compass" id="comp"></div>
+            
             <div class="action-row">
-                <button class="btn-main b-rec" onclick="record()">投球記録</button>
-                <button class="btn-main b-rep" onclick="generateReport()">レポート作成</button>
+                <button class="btn-main" onclick="generateReport()">レポート作成・共有</button>
             </div>
         </div>
         
         <div class="history-list">
             <table class="h-table">
                 <thead><tr><th>#</th><th>球種</th><th>球速</th></tr></thead>
-                <tbody id="h-body"></tbody>
+                <tbody id="h-body">
+                    <tr><td colspan="3" style="color:#999; padding:20px;">ゾーンをタッチして記録開始</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -107,8 +106,8 @@
                 <div class="sw-group"><span>右打</span><label class="switch"><input type="checkbox" id="b-side" onchange="syncUI()"><span class="slider"></span></label><span>左打</span></div>
             </div>
             <div class="m-row"><div class="sw-group"><span>球速スイッチ OFF</span><label class="switch"><input type="checkbox" id="sp-on" onchange="syncUI()"><span class="slider"></span></label><span>ON</span></div></div>
-            <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main b-rec" style="width:100%">完了</button>
-            <button onclick="resetAll()" style="width:100%; margin-top:10px; background:none; border:none; color:var(--danger); font-size:0.75rem;">全データ消去</button>
+            <button onclick="document.getElementById('settings-modal').style.display='none'" class="btn-main" style="width:100%; background:var(--primary)">完了</button>
+            <button onclick="resetAll()" style="width:100%; margin-top:15px; background:none; border:none; color:var(--danger); font-size:0.75rem;">全データ消去</button>
         </div>
     </div>
 
@@ -116,23 +115,20 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3 style="margin:0">📸 レポート共有</h3>
             <img id="report-img" src="" alt="Report">
-            <button class="btn-main share-btn" id="share-api-btn" onclick="shareReport()"><span>📤 アプリで共有する</span></button>
-            <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main b-rec" style="width:100%; margin-top:10px;">閉じる</button>
+            <button class="share-btn" onclick="shareReport()">📤 アプリで共有する</button>
+            <button onclick="document.getElementById('report-modal').style.display='none'" class="btn-main" style="width:100%; margin-top:10px; background:#666;">閉じる</button>
         </div>
     </div>
 
     <script>
-        let curX=null, curY=null, selT='直球', db=[], reportBlob=null;
+        let db=[], selT='直球', reportBlob=null;
         const colors = {'直球':'#e74c3c','カーブ':'#3498db','スライダー':'#2ecc71','フォーク':'#f39c12','チェンジ':'#9b59b6','シュート':'#1abc9c','シンカー':'#d35400','カット':'#34495e','ライズ':'#f1c40f'};
         const pitchLayout = [{a:'↖', r:'カット', l:'シュート'}, {a:'↑', r:'ライズ', l:'ライズ'}, {a:'↗', r:'シュート', l:'カット'},{a:'←', r:'スライダー', l:'シンカー'}, {a:'◯', r:'直球', l:'直球'}, {a:'→', r:'シンカー', l:'スライダー'},{a:'↙', r:'カーブ', l:'チェンジ'}, {a:'↓', r:'フォーク', l:'フォーク'}, {a:'↘', r:'チェンジ', l:'カーブ'}];
 
         function syncUI() {
             const isL = document.getElementById('p-hand').checked;
             document.getElementById('title-label').innerText = `${document.getElementById('p-name').value}(${isL?'L':'R'}) vs ${document.getElementById('b-name').value}(${document.getElementById('b-side').checked?'L':'R'})`;
-            
-            // 球速エリアの表示制御
-            const speedOn = document.getElementById('sp-on').checked;
-            document.getElementById('sp-area').style.display = speedOn ? 'flex' : 'none';
+            document.getElementById('sp-area').style.display = document.getElementById('sp-on').checked ? 'flex' : 'none';
 
             const comp = document.getElementById('comp'); comp.innerHTML = '';
             pitchLayout.forEach(item => {
@@ -144,57 +140,56 @@
             drawMap(); updateHistory();
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
-
         const wrap = document.getElementById('canvas-wrap');
-        function tap(e) {
-            const r=wrap.getBoundingClientRect(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY;
-            curX=Math.round(((x-r.left)/r.width)*300); curY=Math.round(((y-r.top)/r.height)*360);
-            document.querySelectorAll('.tmp').forEach(m=>m.remove());
-            const t=document.createElement('div'); t.className='dot tmp'; t.style.left=(curX/300*100)+'%'; t.style.top=(curY/360*100)+'%'; t.style.background='#000'; wrap.appendChild(t);
+        function handleTouch(e) {
+            e.preventDefault();
+            const r=wrap.getBoundingClientRect(); 
+            const xVal = e.touches ? e.touches[0].clientX : e.clientX;
+            const yVal = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = Math.round(((xVal - r.left) / r.width) * 300);
+            const y = Math.round(((yVal - r.top) / r.height) * 360);
+            
+            // 即時記録
+            const spVal = document.getElementById('sp-on').checked ? document.getElementById('sp-sld').value + " km/h" : "-";
+            db.push({t:selT, x:x, y:y, s:spVal});
+            
+            drawMap();
+            updateHistory();
         }
-        wrap.addEventListener('mousedown', tap); wrap.addEventListener('touchstart', e=>{ e.preventDefault(); tap(e); });
-
-        function record() {
-            if(curX===null) return alert("位置を選択！");
-            const spVal = document.getElementById('sp-on').checked ? document.getElementById('sp-sld').value + "km/h" : "-";
-            db.push({t:selT, x:curX, y:curY, s:spVal});
-            drawMap(); updateHistory(); curX=null; document.querySelectorAll('.tmp').forEach(m=>m.remove());
-        }
+        wrap.addEventListener('touchstart', handleTouch);
+        wrap.addEventListener('mousedown', handleTouch);
 
         function updateHistory() {
-            const body = document.getElementById('h-body'); body.innerHTML = '';
+            const body = document.getElementById('h-body');
+            if(db.length === 0) return;
+            body.innerHTML = '';
             [...db].reverse().forEach((p, i) => {
                 const row = body.insertRow();
-                row.innerHTML = `<td>${db.length-i}</td><td>${p.t}</td><td>${p.s}</td>`;
+                row.innerHTML = `<td>${db.length-i}</td><td><span style="color:${colors[p.t]}">●</span> ${p.t}</td><td>${p.s}</td>`;
             });
         }
 
         function drawMap() {
             const ctx = document.getElementById('h-layer').getContext('2d'); ctx.clearRect(0,0,300,360);
-            document.querySelectorAll('.dot:not(.tmp)').forEach(m=>m.remove());
+            document.querySelectorAll('.dot').forEach(m=>m.remove());
             db.forEach(p => {
                 const m=document.createElement('div'); m.className='dot'; m.style.left=(p.x/300*100)+'%'; m.style.top=(p.y/360*100)+'%'; m.style.background=colors[p.t]||'#fff'; wrap.appendChild(m);
             });
         }
 
         async function generateReport() {
-            if(db.length === 0) return alert("記録なし");
+            if(db.length === 0) return alert("記録がありません");
             const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 800;
             ctx.fillStyle = "#fff"; ctx.fillRect(0,0,600,800);
             ctx.fillStyle = "#0a2e5c"; ctx.fillRect(0,0,600,80);
             ctx.fillStyle = "#fff"; ctx.font = "bold 26px sans-serif"; ctx.fillText("PITCHING REPORT", 30, 50);
             ctx.fillStyle = "#333"; ctx.font = "bold 22px sans-serif"; ctx.fillText(document.getElementById('title-label').innerText, 30, 120);
-            
             ctx.save(); ctx.translate(30, 160); ctx.fillStyle = "#222"; ctx.fillRect(0,0,300,360);
             ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.strokeRect(300*0.21, 360*0.22, 300*0.58, 360*0.56);
             db.forEach(p => { ctx.fillStyle = colors[p.t]; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke(); }); ctx.restore();
-            
             ctx.fillStyle = "#000"; ctx.font = "bold 18px sans-serif"; ctx.fillText("【Pitch History】", 350, 180);
             db.slice(-15).reverse().forEach((p,i) => { ctx.font = "14px sans-serif"; ctx.fillText(`${db.length-i}. ${p.t} (${p.s})`, 350, 210+(i*24)); });
-            
             document.getElementById('report-img').src = canvas.toDataURL("image/png");
             canvas.toBlob(blob => { reportBlob = blob; }, "image/png");
             openModal('report-modal');
@@ -205,9 +200,11 @@
             const file = new File([reportBlob], "report.png", { type: "image/png" });
             const shareData = { files: [file], title: '投球レポート', text: document.getElementById('title-label').innerText };
             if (navigator.canShare && navigator.canShare(shareData)) { try { await navigator.share(shareData); } catch (e) {} }
-            else { alert("長押し保存してください"); }
+            else { alert("長押しで保存してください"); }
         }
 
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).style.display = 'none'; }
         function resetAll() { if(confirm("全データを消去しますか？")) { db = []; drawMap(); syncUI(); } }
         syncUI();
     </script>
